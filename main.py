@@ -1,5 +1,8 @@
 import pylast
-from config import last_fm_apikey, last_fm_secret, last_fm_password, last_fm_username
+from config import last_fm_apikey, last_fm_secret, last_fm_password, last_fm_username, spotify_client_ID, spotify_client_secret
+from youtubesearchpython import VideosSearch
+#TODO - take list of unlistened tracks, provide youtube and spotify links to easily view them
+
 
 last_fm_passwordMD5 = pylast.md5(last_fm_password)
 
@@ -89,19 +92,34 @@ def process_set(input_set):
             processed_set.add(element)
     return processed_set
 
+def trim_track_set(track_set_processed, artist_name_corrected):
+    track_set_trimmed = set()
+    for element in track_set_processed:
+        if element.split(' - ')[0].strip() == artist_name_corrected:
+            track_set_trimmed.add(element)
+    return track_set_trimmed
+
 def main():
-    print("Hello world")
-    track_set = get_history(10, 'seaty6')
+    track_set = get_history(0, 'seaty6')
     print("Length of track Set, Unprocessed: " + str(len(track_set)))
     track_set_processed = process_set(track_set)
     print("Length of track Set, processed: " + str(len(track_set_processed)))
 
-    artist_set, artist_name_corrected = get_artist('Kanye', 10)
+    artist_set, artist_name_corrected = get_artist('Kanye', 500)
+
     print(artist_name_corrected)
     print("Length of artist Set, Unprocessed: " + str(len(artist_set)))
+
     artist_set_processed = process_set(artist_set)
+
     print("Length of artist Set, processed: "    + str(len(artist_set_processed)))
 
+    track_set_trimmed = trim_track_set(track_set_processed, artist_name_corrected)
+    unlistened_songs = artist_set_processed - track_set_trimmed
+    
+    print(artist_set_processed)
+    print(track_set_trimmed)
+    print(unlistened_songs)
 
 
 if __name__ == "__main__":
