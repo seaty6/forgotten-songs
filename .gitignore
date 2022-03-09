@@ -3,3 +3,4 @@ config.py
 testing.py
 no_recursion.py
 main copy.py
+main non_global.py
