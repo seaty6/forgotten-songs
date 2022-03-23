@@ -1,19 +1,26 @@
 import pylast
-from config import last_fm_apikey, last_fm_secret, last_fm_password, last_fm_username, spotify_client_ID, spotify_client_secret
-from youtubesearchpython import VideosSearch
-#TODO - take list of unlistened tracks, provide youtube and spotify links to easily view them
-
+from config import last_fm_apikey, last_fm_secret, last_fm_password, last_fm_username
 
 last_fm_passwordMD5 = pylast.md5(last_fm_password)
 
 last_fm_object = pylast.LastFMNetwork(api_key=last_fm_apikey, api_secret=last_fm_secret, username=last_fm_username, password_hash=last_fm_passwordMD5)
-
-
+track_set = set()
+artist_set = set()
 test_list = []
+artist_popularity_dict = {}
+artist_popularity_array = []
+
+def artist_popularity(song_name):
+    artist_name = song_name[:song_name.index(" - ")]
+    if artist_name in artist_popularity_dict:
+        artist_popularity_dict[artist_name] = artist_popularity_dict[artist_name] + 1
+    else:
+        artist_popularity_dict[artist_name] = 1
+    print(artist_popularity_dict)
 
 def get_history(number_of_songs, username):
     #if number_of_songs = 0, then download all - minimum, 500
-    track_set = set()
+
     user_object = last_fm_object.get_user(username)
 
     if number_of_songs == 0:
@@ -31,6 +38,7 @@ def get_history(number_of_songs, username):
         try:
             print(temp_str)
             temp_str = str(temp_str)
+            artist_popularity(temp_str)
             track_set.add(temp_str)
         except UnicodeEncodeError:
             pass
@@ -44,11 +52,12 @@ def get_history(number_of_songs, username):
             try:
                 print(temp_str)
                 temp_str = str(temp_str)
+                artist_popularity(temp_str)
                 track_set.add(temp_str)
             except UnicodeEncodeError:
                 pass
         loop_counter = loop_counter - 1
-    return track_set         
+            
 
         
 
@@ -59,8 +68,8 @@ def get_history(number_of_songs, username):
     print(last_retrieved_track_timestamp)
     
 def get_artist(artist_name, num_songs):
-    artist_set = set()
     artist_object = last_fm_object.get_artist(artist_name)
+    print(artist_name)
     things = artist_object.get_top_tracks(limit=num_songs, stream=True)
     for element in things:
         temp_str = (element[0])
@@ -71,10 +80,8 @@ def get_artist(artist_name, num_songs):
             artist_set.add(temp_str)
         except UnicodeEncodeError:
             pass
-    for element in artist_set:
-        artist_name_corrected = element.split(' - ')[0].strip()
-        break
-    return artist_set, artist_name_corrected
+    
+    return str(artist_object)
     
 
 def process_set(input_set):
@@ -86,40 +93,24 @@ def process_set(input_set):
                 element = element[:element.find(phrase)].strip()
         if element.count(' - ') == 1:
             processed_set.add(element)
-        elif element.count(' - ') > 1:
-            first_found_location = (element.find(' - '))
-            element = element[:(element.find(' - ',first_found_location+1,-1))]
-            processed_set.add(element)
     return processed_set
 
-def trim_track_set(track_set_processed, artist_name_corrected):
-    track_set_trimmed = set()
-    for element in track_set_processed:
-        if element.split(' - ')[0].strip() == artist_name_corrected:
-            track_set_trimmed.add(element)
-    return track_set_trimmed
 
 def main():
-    track_set = get_history(0, 'seaty6')
+    print("Hello world")
+    get_history(10, 'seaty6')
     print("Length of track Set, Unprocessed: " + str(len(track_set)))
     track_set_processed = process_set(track_set)
     print("Length of track Set, processed: " + str(len(track_set_processed)))
 
-    artist_set, artist_name_corrected = get_artist('Kanye', 500)
-
-    print(artist_name_corrected)
+    artist_name = get_artist('Kanye', 10)
+    print(artist_name)
     print("Length of artist Set, Unprocessed: " + str(len(artist_set)))
-
     artist_set_processed = process_set(artist_set)
-
     print("Length of artist Set, processed: "    + str(len(artist_set_processed)))
+    artist_popularity_array = sorted(artist_popularity_dict, key=artist_popularity_dict.get, reverse=True)[:2]
+    print(artist_popularity_array)
 
-    track_set_trimmed = trim_track_set(track_set_processed, artist_name_corrected)
-    unlistened_songs = artist_set_processed - track_set_trimmed
-    
-    print(artist_set_processed)
-    print(track_set_trimmed)
-    print(unlistened_songs)
 
 
 if __name__ == "__main__":
